@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   const toggleBtn = document.getElementById('toggle-btn');
   const clearBtn = document.getElementById('clear-btn');
+  const copyBtn = document.getElementById('copy-btn');
   const exportBtn = document.getElementById('export-btn');
   const statusText = document.getElementById('status-text');
   const statusIndicator = document.getElementById('status-indicator');
@@ -56,20 +57,32 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // 显示字幕文本
+    // 显示字幕文本
   function displaySubtitles(subtitles) {
     if (subtitles.length === 0) {
       subtitleText.value = '';
       return;
     }
 
-    // 将所有字幕连接成一段连续的文本
-    const text = subtitles.map(subtitle => subtitle.text).join('');
+    // 按时间戳排序确保正确顺序，然后连接成连续文本
+    const sortedSubtitles = [...subtitles].sort((a, b) => {
+      // 优先使用精确的时间戳排序
+      if (a.order && b.order) {
+        return a.order - b.order;
+      }
+      // 备用方案：按时间字符串排序
+      if (a.timestamp && b.timestamp) {
+        return new Date('1970/01/01 ' + a.timestamp) - new Date('1970/01/01 ' + b.timestamp);
+      }
+      return 0;
+    });
+    
+    const text = sortedSubtitles.map(subtitle => subtitle.text).join('');
     subtitleText.value = text;
     
     // 滚动到底部显示最新内容
     subtitleText.scrollTop = subtitleText.scrollHeight;
-    }
+  }
 
   // 切换记录状态
   toggleBtn.addEventListener('click', () => {
@@ -88,6 +101,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  // 复制字幕到剪贴板
+  copyBtn.addEventListener('click', () => {
+    chrome.storage.local.get(['subtitles'], (result) => {
+      const subtitles = result.subtitles || [];
+      
+      if (subtitles.length === 0) {
+        showMessage('暂无字幕内容可复制');
+        return;
+      }
+
+      // 按时间戳排序确保正确顺序，然后合并成连续文本
+      const sortedSubtitles = [...subtitles].sort((a, b) => {
+        if (a.order && b.order) {
+          return a.order - b.order;
+        }
+        if (a.timestamp && b.timestamp) {
+          return new Date('1970/01/01 ' + a.timestamp) - new Date('1970/01/01 ' + b.timestamp);
+        }
+        return 0;
+      });
+      const text = sortedSubtitles.map(subtitle => subtitle.text).join('');
+      
+      // 复制到剪贴板
+      navigator.clipboard.writeText(text).then(() => {
+        showMessage(`字幕已复制到剪贴板 (${subtitles.length}条)`);
+      }).catch(err => {
+        console.error('复制失败:', err);
+        showMessage('复制失败，请手动选择文本复制');
+      });
+    });
+  });
+
   // 导出字幕
   exportBtn.addEventListener('click', () => {
     chrome.storage.local.get(['subtitles'], (result) => {
@@ -98,8 +143,17 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      // 生成连续文本内容
-      const content = subtitles.map(subtitle => subtitle.text).join('');
+      // 按时间戳排序确保正确顺序，然后生成连续文本内容
+      const sortedSubtitles = [...subtitles].sort((a, b) => {
+        if (a.order && b.order) {
+          return a.order - b.order;
+        }
+        if (a.timestamp && b.timestamp) {
+          return new Date('1970/01/01 ' + a.timestamp) - new Date('1970/01/01 ' + b.timestamp);
+        }
+        return 0;
+      });
+      const content = sortedSubtitles.map(subtitle => subtitle.text).join('');
 
       // 创建下载链接
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });

@@ -77,8 +77,45 @@ function stopRecording() {
   }
   
   lastSubtitleText = '';
+  
+  // 自动复制字幕到剪贴板
+  copySubtitlesToClipboard();
+  
   showNotification('停止记录字幕', 'info');
   console.log('停止记录字幕');
+}
+
+// 复制字幕到剪贴板
+function copySubtitlesToClipboard() {
+  chrome.storage.local.get(['subtitles'], (result) => {
+    const subtitles = result.subtitles || [];
+    
+    if (subtitles.length === 0) {
+      showNotification('暂无字幕内容可复制', 'warning');
+      return;
+    }
+    
+    // 按时间戳排序确保正确顺序，然后合并成连续文本
+    const sortedSubtitles = [...subtitles].sort((a, b) => {
+      if (a.order && b.order) {
+        return a.order - b.order;
+      }
+      if (a.timestamp && b.timestamp) {
+        return new Date('1970/01/01 ' + a.timestamp) - new Date('1970/01/01 ' + b.timestamp);
+      }
+      return 0;
+    });
+    const text = sortedSubtitles.map(subtitle => subtitle.text).join('');
+    
+    // 复制到剪贴板
+    navigator.clipboard.writeText(text).then(() => {
+      showNotification(`字幕已复制到剪贴板 (${subtitles.length}条)`, 'success');
+      console.log('字幕已复制到剪贴板:', text);
+    }).catch(err => {
+      console.error('复制失败:', err);
+      showNotification('复制失败，请手动复制', 'error');
+    });
+  });
 }
 
 // 显示通知
@@ -90,23 +127,26 @@ function showNotification(message, type = 'info') {
     top: 20px;
     right: 20px;
     padding: 10px 15px;
-    background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+    background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : type === 'warning' ? '#FF9800' : '#2196F3'};
     color: white;
     border-radius: 4px;
     z-index: 10000;
     font-size: 14px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    max-width: 300px;
+    word-wrap: break-word;
   `;
   notification.textContent = message;
   
   document.body.appendChild(notification);
   
-  // 3秒后自动移除
+  // 根据消息类型决定显示时间
+  const displayTime = type === 'success' ? 4000 : 3000;
   setTimeout(() => {
     if (notification.parentNode) {
       notification.parentNode.removeChild(notification);
     }
-  }, 3000);
+  }, displayTime);
 }
 
 // 监听来自后台脚本的消息

@@ -21,7 +21,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const subtitles = result.subtitles || [];
       subtitles.push({
         text: request.text,
-        timestamp: new Date().toLocaleTimeString()
+        timestamp: new Date().toLocaleTimeString(),
+        order: Date.now() // 添加精确的时间戳用于排序
       });
       
       chrome.storage.local.set({subtitles: subtitles}, () => {
