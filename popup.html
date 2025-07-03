@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>百度网盘字幕提取器</h2>
+      <div class="status">
+        <span id="status-text">未开始记录</span>
+        <div id="status-indicator" class="status-indicator"></div>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <button id="toggle-btn" class="btn btn-primary">开始记录</button>
+      <button id="clear-btn" class="btn btn-secondary">清空记录</button>
+      <button id="export-btn" class="btn btn-success">导出字幕</button>
+    </div>
+    
+    <div class="subtitle-count">
+      共记录 <span id="count">0</span> 条字幕
+    </div>
+    
+    <div class="subtitle-container">
+      <textarea id="subtitle-text" class="subtitle-text" placeholder="字幕内容将在这里显示..." readonly></textarea>
+    </div>
+    
+    <div class="footer">
+      <div class="shortcut-tip">
+        快捷键: Ctrl+Shift+S (Mac: Cmd+Shift+S)
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html> 

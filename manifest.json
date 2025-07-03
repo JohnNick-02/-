@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "百度网盘字幕提取器",
+  "version": "1.0",
+  "description": "实时记录百度网盘视频字幕的浏览器插件",
+  
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  
+  "host_permissions": [
+    "*://*.baidu.com/*",
+    "*://*.baidupcs.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["*://*.baidu.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "字幕提取器"
+  },
+  
+  "commands": {
+    "toggle-recording": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "开始/停止记录字幕"
+    }
+  }
+} 
